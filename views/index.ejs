@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/bootstrap.min.css' />
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+    <script src='/javascripts/bootstrap.min.js'></script>
+    
+    <script>
+    $(document).ready(function() {
+    	    $("#form_sliders").submit(function(e) {
+    		$.ajax({
+    			method: "POST",
+    			url: "/api/postData",
+    			data: $("#form_sliders").serialize(),
+    			success : function (res) {
+    				console.log(res);
+    			},
+    			error : function (err) {
+    				console.log(err);
+    			}
+    		});
+    		e.preventDefault();
+
+    	});
+    });
+
+    </script>
+
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Change the sliders to change the lights!</p>
+    <form action="/api/postData" id="form_sliders" method="post">
+		Red: <input type="range" name="r" min="0" max="255">
+		Green: <input type="range" name="g" min="0" max="255">
+		Blue: <input type="range" name="b" min="0" max="255">
+		<br>
+		<input type="submit">
+	</form>
+
+  </body>
+</html>
