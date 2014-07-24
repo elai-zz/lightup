@@ -34,44 +34,54 @@ app.get("/api/getData", function (req, res) {
 
 
 /******************************************************************************/
-var devices = [];
+var peripheralUuid = "9059af170332";
+var lightupPeripheral;
 
-var getDevices = function() {
-  console.log('getDevices');
+console.log("before stateChange");
 
-  noble.on('scanStart', function() {
-    console.log("Starting to scanning peripheral");
-  });
+noble.on('stateChange', function(state) {
+  console.log("state " + state);
+  if (state === 'poweredOn') {
+    noble.startScanning();
+    console.log("Scanning...");
+  } else {
+  console.log("Bluetooth isn't on!");
+    noble.stopScanning();
+  }
+});
 
-  noble.on('discover', function(peripheral) {
-    console.log('Found device with local name: ' + peripheral.advertisement.localName);
-    console.log('advertising the following service uuid\'s: ' + peripheral.advertisement.serviceUuids);
-    console.log();
-    devices.push(peripheral.advertisement.serviceUuids);
-  });
-
-  noble.startScanning(); // any service UUID, allow duplicate
-}
-
-getDevices();
-
+noble.on('discover', function(peripheral) {
+  if (peripheral.uuid === peripheralUuid) {
+    console.log("found light bulb!");
+      noble.stopScanning();
+      console.log('matching services and characteristics...');
+    lightupPeripheral = peripheral;
+    }
+});
 /******************************************************************************/
  
 
 app.post("/api/postData", function (req, res) {
   console.log("here");
-  // noble.on('stateChange', function(state) {
-  // // possible state values: "unknown", "resetting", "unsupported", "unauthorized", "poweredOff", "poweredOn"
-  //   if (state === 'poweredOn') {
-  //     noble.startScanning();
-  //     console.log("Scanning...");
-  //   } else {
-  //     noble.stopScanning();
-  //   }
-  // ...
-  // });
 
-  res.send(200, "here are devices : " + devices.join(","));
+  if (lightupPeripheral) {
+      lightupPeripheral.connect(function(error) {
+      // main service for serial
+      var serviceUUIDs = ["ffe0"];
+      var characteristicUUIDs = ["ffe1"];
+      peripheral.discoverSomeServicesAndCharacteristics(serviceUUIDs, characteristicUUIDs,function(err,services,chars)  {
+      console.log(req.body);
+      console.log(req.params);
+      var buf = new Buffer("0,255,0\n", "ascii");
+   
+      console.log(buf);
+      chars[0].write(buf, false);
+      });
+    });
+    res.send(200, "here are devices : " + devices.join(","));
+  } else {
+    res.send(500, "Lightup not found.");
+  }
 });
 
 /// error handlers
